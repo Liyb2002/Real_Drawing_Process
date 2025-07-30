@@ -74,7 +74,6 @@ class cad2sketch_dataset_loader(Dataset):
         """
 
         data_idx = Path(subfolder_path).name
-        print("data_idx", data_idx)
 
         # List all directories inside subfolder_path
         inner_dirs = [d for d in os.listdir(subfolder_path) 
@@ -101,9 +100,8 @@ class cad2sketch_dataset_loader(Dataset):
         stroke_node_features = Preprocessing.cad2sketch_stroke_features.remove_duplicate (stroke_node_features)
         stroke_node_features, added_feature_lines= Preprocessing.cad2sketch_stroke_features.split_and_merge_stroke_cloud(stroke_node_features, is_feature_line_matrix)
        
-        # print("len added_feature_lines", len(added_feature_lines))
         # Preprocessing.cad2sketch_stroke_features.vis_stroke_node_features_and_highlights(stroke_node_features, added_feature_lines)
-        # Preprocessing.cad2sketch_stroke_features.vis_strokes_one_by_one(all_lines, stroke_node_features)
+        Preprocessing.cad2sketch_stroke_features.vis_strokes_one_by_one(all_lines, stroke_node_features)
         # Preprocessing.cad2sketch_stroke_features.vis_circle_strokes(all_lines, stroke_node_features)
 
 

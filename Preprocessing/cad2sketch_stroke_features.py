@@ -2958,66 +2958,103 @@ def point_on_line(p, a, b, tol=1e-3):
     return True
 
 
-def split_and_merge_stroke_cloud(stroke_node_features, is_feature_line_matrix):
+def remove_duplicate_lines(add_feature_lines, stroke_node_features, tol=1e-4):
+    """
+    Removes duplicate lines from add_feature_lines by comparing:
+    - against each other
+    - against existing feature lines in stroke_node_features
+
+    Two lines are considered duplicates if their endpoints match (in either direction)
+    within a tolerance `tol`.
+
+    Parameters:
+    - add_feature_lines: list of new lines (each line has at least 6 values).
+    - stroke_node_features: numpy array of existing strokes (some are feature lines).
+
+    Returns:
+    - unique_lines: list of unique lines.
+    """
+
+    # Step 1: Collect existing feature line endpoints
+    existing_lines = []
+    for stroke in stroke_node_features:
+        if stroke[-1] == 1:
+            p1 = tuple(np.round(stroke[:3], 4))
+            p2 = tuple(np.round(stroke[3:6], 4))
+            existing_lines.append((p1, p2))
+
+    unique_lines = []
+
+    # Step 2: Check each new line for duplicates
+    for line in add_feature_lines:
+        p1 = tuple(line[:3])
+        p2 = tuple(line[3:6])
+
+        is_duplicate = False
+
+        # Compare with existing feature strokes
+        for q1, q2 in existing_lines:
+            if (np.linalg.norm(np.array(p1) - np.array(q1)) < tol and np.linalg.norm(np.array(p2) - np.array(q2)) < tol) or \
+               (np.linalg.norm(np.array(p1) - np.array(q2)) < tol and np.linalg.norm(np.array(p2) - np.array(q1)) < tol):
+                is_duplicate = True
+                break
+
+        # Compare with already accepted new lines
+        if not is_duplicate:
+            for existing in unique_lines:
+                q1 = tuple(existing[:3])
+                q2 = tuple(existing[3:6])
+                if (np.linalg.norm(np.array(p1) - np.array(q1)) < tol and np.linalg.norm(np.array(p2) - np.array(q2)) < tol) or \
+                   (np.linalg.norm(np.array(p1) - np.array(q2)) < tol and np.linalg.norm(np.array(p2) - np.array(q1)) < tol):
+                    is_duplicate = True
+                    break
+
+        if not is_duplicate:
+            unique_lines.append(line)
+
+    return unique_lines
+
+
+def split_and_merge_stroke_cloud(stroke_node_features, is_feature_line_matrix=None):
     stroke_node_features = np.array(stroke_node_features)
     add_feature_lines = []
 
     # Step 1: Gather unique points from feature lines
     unique_points = set()
-    for i, stroke in enumerate(stroke_node_features):
+    for stroke in stroke_node_features:
         if stroke[-1] == 1:
             point_1 = tuple(np.round(stroke[:3], 4))
             point_2 = tuple(np.round(stroke[3:6], 4))
             unique_points.add(point_1)
             unique_points.add(point_2)
-
     unique_points = list(unique_points)
 
-    # Step 2.1: Find sets of collinear points
-    collinear_candidate_sets = []
-
-    for i, stroke in enumerate(stroke_node_features):
+    # Step 2: Find all sets of 3 collinear points (line endpoints + 1 additional point)
+    collinear_sets = []
+    for stroke in stroke_node_features:
         if stroke[-1] != 1:
             continue
+
         p1 = tuple(np.round(stroke[:3], 5))
         p2 = tuple(np.round(stroke[3:6], 5))
-        collinear_candidate_sets.append(set([p1, p2]))
+        line_vec = np.array(p2) - np.array(p1)
+        line_len = np.linalg.norm(line_vec)
 
-    # Step 2.2: Enrich each set with all other points that lie on the same line
-    collinear_sets = []
-    for point in unique_points:
-        for s in collinear_candidate_sets:
-            if len(s) == 2:
-                s_list = list(s)
-                dist_collinear = np.linalg.norm(np.array(list(s)[0]) - np.array(list(s)[1]))
-                ref = s_list[0]  # pick first point as reference
+        for point in unique_points:
+            if point == p1 or point == p2:
+                continue
 
-                is_collinear = all(point_on_line(point, ref, other) for other in s if other != point)
-                is_far_enough = all(np.linalg.norm(np.array(point) - np.array(other)) > dist_collinear * 0.2 for other in s)
+            # Check collinearity and sufficient distance from endpoints
+            if point_on_line_extension(point, p1, p2):
+                dist1 = np.linalg.norm(np.array(point) - np.array(p1))
+                dist2 = np.linalg.norm(np.array(point) - np.array(p2))
+                if dist1 > 0.2 * line_len and dist2 > 0.2 * line_len:
+                    collinear_sets.append((p1, p2, point))  # point always last
 
-                if is_collinear and is_far_enough:
-                    new_set = set(s)
-                    new_set.add(point)
-                    collinear_sets.append(new_set)
-
-
-    # for c_set in collinear_sets:
-    #     print("set", c_set)
-
-    # Step 3: From each collinear set, generate all segments (in order of distance)
-    for col_set in collinear_sets:
-        col_set_np = np.array(list(col_set))
-
-        if len(col_set_np) != 3:
-            continue  # skip if malformed set
-
-        # Use the first point as anchor
-        anchor = col_set_np[0]
-        others = [pt for pt in col_set_np if not np.allclose(pt, anchor)]
-
-        for pt in others:
-            pt1 = anchor
-            pt2 = pt
+    # Step 3: From each 3-point set (a, b, c), create lines (a, c) and (b, c)
+    for a, b, c in collinear_sets:
+        for pt1 in [a, b]:
+            pt2 = c
             new_line = np.concatenate([pt1, pt2])
 
             # Check if line already exists
@@ -3028,22 +3065,22 @@ def split_and_merge_stroke_cloud(stroke_node_features, is_feature_line_matrix):
                 tol = 0.1 * np.linalg.norm(s - e)
 
                 if (np.linalg.norm(s - pt1) < tol and np.linalg.norm(e - pt2) < tol) or \
-                (np.linalg.norm(s - pt2) < tol and np.linalg.norm(e - pt1) < tol):
+                   (np.linalg.norm(s - pt2) < tol and np.linalg.norm(e - pt1) < tol):
                     exists = True
                     break
 
             if not exists:
-                # Add feature stroke with custom attributes
                 new_line_with_attr = list(new_line) + [0] + [0, 0, 0, 1]
                 add_feature_lines.append(new_line_with_attr)
-        
 
-
+    # Step 4: Combine original and new strokes
     updated_strokes = np.concatenate([stroke_node_features, np.array(add_feature_lines)], axis=0) \
         if add_feature_lines else stroke_node_features
 
-    return updated_strokes, np.array(add_feature_lines)
-
+    clean_lines = remove_duplicate_lines(add_feature_lines, stroke_node_features)
+    updated_strokes = np.concatenate([stroke_node_features, np.array(clean_lines)], axis=0) \
+        if clean_lines else stroke_node_features
+    return updated_strokes, np.array(clean_lines)
 
 
 
