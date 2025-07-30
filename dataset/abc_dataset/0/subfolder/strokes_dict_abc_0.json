@@ -1,0 +1,84 @@
+[
+    {
+        "id": 33,
+        "intersections": [
+            [
+                12,
+                22,
+                25
+            ]
+        ]
+    },
+    {
+        "id": 34,
+        "intersections": [
+            [
+                22,
+                28,
+                33
+            ]
+        ]
+    },
+    {
+        "id": 35,
+        "intersections": [
+            [
+                31,
+                32
+            ]
+        ]
+    },
+    {
+        "id": 36,
+        "intersections": [
+            [
+                32
+            ]
+        ]
+    },
+    {
+        "id": 37,
+        "intersections": [
+            [
+                35,
+                36
+            ]
+        ]
+    },
+    {
+        "id": 38,
+        "intersections": [
+            [
+                29,
+                30
+            ]
+        ]
+    },
+    {
+        "id": 39,
+        "intersections": [
+            [
+                36,
+                38
+            ]
+        ]
+    },
+    {
+        "id": 40,
+        "intersections": [
+            [
+                29
+            ]
+        ]
+    },
+    {
+        "id": 41,
+        "intersections": [
+            [
+                33,
+                35,
+                40
+            ]
+        ]
+    }
+]
