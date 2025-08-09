@@ -101,7 +101,7 @@ class cad2sketch_dataset_loader(Dataset):
         stroke_node_features, added_feature_lines= Preprocessing.cad2sketch_stroke_features.split_and_merge_stroke_cloud(stroke_node_features, is_feature_line_matrix)
        
         # Preprocessing.cad2sketch_stroke_features.vis_stroke_node_features_and_highlights(stroke_node_features, added_feature_lines)
-        Preprocessing.cad2sketch_stroke_features.vis_strokes_one_by_one(all_lines, stroke_node_features)
+        # Preprocessing.cad2sketch_stroke_features.vis_strokes_one_by_one(all_lines, stroke_node_features)
         # Preprocessing.cad2sketch_stroke_features.vis_circle_strokes(all_lines, stroke_node_features)
 
 
@@ -111,7 +111,7 @@ class cad2sketch_dataset_loader(Dataset):
         stroke_cloud_loops = Preprocessing.proc_CAD.helper.face_aggregate_networkx(stroke_node_features) + Preprocessing.proc_CAD.helper.face_aggregate_circle(stroke_node_features)
         stroke_cloud_loops = Preprocessing.proc_CAD.helper.reorder_loops(stroke_cloud_loops)
         stroke_cloud_loops = [list(loop) for loop in stroke_cloud_loops]
-        Preprocessing.cad2sketch_stroke_features.vis_feature_lines_loop_all(all_lines, stroke_node_features, stroke_cloud_loops)
+        # Preprocessing.cad2sketch_stroke_features.vis_feature_lines_loop_all(all_lines, stroke_node_features, stroke_cloud_loops)
 
 
         loop_neighboring_all = Preprocessing.proc_CAD.helper.loop_neighboring_simple(stroke_cloud_loops)
@@ -126,10 +126,10 @@ class cad2sketch_dataset_loader(Dataset):
 
         # Preprocessing.cad2sketch_stroke_features.vis_feature_lines_by_index_list(all_lines, stroke_node_features, [])
 
-        for idxxx in [1]:
-            connected_indices = np.where(strokes_perpendicular[idxxx] == 1)[0]
-            Preprocessing.cad2sketch_stroke_features.vis_feature_lines_by_index_list(all_lines, stroke_node_features, [])
-            Preprocessing.cad2sketch_stroke_features.vis_feature_lines_by_index_list(all_lines, stroke_node_features, connected_indices)
+        # for idxxx in [1]:
+        #     connected_indices = np.where(strokes_perpendicular[idxxx] == 1)[0]
+        #     Preprocessing.cad2sketch_stroke_features.vis_feature_lines_by_index_list(all_lines, stroke_node_features, [])
+            # Preprocessing.cad2sketch_stroke_features.vis_feature_lines_by_index_list(all_lines, stroke_node_features, connected_indices)
 
         output_file_path = os.path.join(subfolder_path, f'shape_info.pkl')
         with open(output_file_path, 'wb') as f:

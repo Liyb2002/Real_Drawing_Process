@@ -25,58 +25,15 @@ class perturbation_dataset_loader(Dataset):
 
 
     def load_dataset(self):
-        """
-        Loads the dataset by iterating over all subfolders and storing their paths.
-        """
-        if not os.path.exists(self.data_path):
-            print(f"Dataset path '{self.data_path}' not found.")
-            return
-
-        folders = [folder for folder in os.listdir(self.data_path) if os.path.isdir(os.path.join(self.data_path, folder))]
-        folders_sorted = sorted(folders, key=lambda x: int(os.path.basename(x)))
-
-        if not folders:
-            print("No folders found in the dataset directory.")
-            return
-
-        total_folders = 0
-        target_index = 0
-        for folder in folders_sorted:
-            folder_index = int(os.path.basename(folder))
-            if folder_index <= target_index:
-                continue
-            
-            total_folders += 1
-            success_process = self.process_subfolder(os.path.join(self.data_path, folder))
-
-
-
-
-    def process_subfolder(self, subfolder_path):
-        """
-        Processes an individual subfolder by reading JSON files and extracting relevant data.
-        """
-
-        data_idx = Path(subfolder_path).name
-        print("data_idx", data_idx)
-        
-        # List all directories inside subfolder_path
-        inner_dirs = [d for d in os.listdir(subfolder_path) 
-                    if os.path.isdir(os.path.join(subfolder_path, d))]
-
-        if len(inner_dirs) != 1:
-            raise ValueError(f"Expected exactly one subfolder inside {subfolder_path}, found {len(inner_dirs)}")
-
-        only_folder = os.path.join(subfolder_path, inner_dirs[0])
-        final_edges_file_path = os.path.join(only_folder, 'final_edges.json')
+        final_edges_file_path = os.path.join(self.data_path, 'final_edges.json')
 
         final_edges_data = self.read_json(final_edges_file_path)
         all_lines = Preprocessing.cad2sketch_stroke_features.extract_all_lines(final_edges_data)
 
 
         stroke_node_features, _= Preprocessing.cad2sketch_stroke_features.build_final_edges_json(all_lines)
-        all_lines, stroke_node_features = Preprocessing.proc_CAD.perturbation_helper.remove_contained_lines(all_lines, stroke_node_features)
-        all_lines, stroke_node_features = Preprocessing.proc_CAD.perturbation_helper.duplicate_lines(all_lines, stroke_node_features)
+        # all_lines, stroke_node_features = Preprocessing.proc_CAD.perturbation_helper.remove_contained_lines(all_lines, stroke_node_features)
+        # all_lines, stroke_node_features = Preprocessing.proc_CAD.perturbation_helper.duplicate_lines(all_lines, stroke_node_features)
 
         all_lines = Preprocessing.proc_CAD.perturbation_helper.compute_opacity(all_lines)
 
@@ -84,7 +41,7 @@ class perturbation_dataset_loader(Dataset):
         
         Preprocessing.cad2sketch_stroke_features.vis_feature_lines(perturbed_all_lines)
 
-        perturbed_output_path = os.path.join(subfolder_path, 'perturbed_all_lines.json')
+        perturbed_output_path = os.path.join(self.data_path, 'perturbed_all_lines.json')
 
         # Save to JSON file
         with open(perturbed_output_path, 'w') as f:
