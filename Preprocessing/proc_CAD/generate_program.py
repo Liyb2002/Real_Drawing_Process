@@ -394,8 +394,10 @@ class Brep:
         
         self.write_terminate(data)  
 
+        safe_data = make_json_safe(data)
+
         with open(filename, 'w') as f:
-            json.dump(data, f, indent=4)
+            json.dump(safe_data, f, indent=4)
         
         print(f"Data saved to {filename}")
 
@@ -576,3 +578,23 @@ class Brep:
                 return edge
 
         return None
+
+
+import json
+import numpy as np
+
+def make_json_safe(obj):
+    """Recursively convert objects into JSON-serializable Python types."""
+    if isinstance(obj, dict):
+        return {make_json_safe(k): make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return [make_json_safe(x) for x in obj]
+    elif isinstance(obj, (np.generic,)):  # catches np.float32, np.int32, etc.
+        return obj.item()
+    elif isinstance(obj, np.ndarray):
+        return obj.astype(float).tolist()  # ensure float64 lists
+    elif isinstance(obj, (float, int, str, bool)) or obj is None:
+        return obj
+    else:
+        # fallback: string representation
+        return str(obj)

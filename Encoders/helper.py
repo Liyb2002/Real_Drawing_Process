@@ -976,7 +976,6 @@ def vis_selected_strokes(stroke_node_features, selected_stroke_idx, data_idx, al
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
-    ax.set_frame_on(False)
     ax.grid(False)
     ax.set_axis_off()
 
